@@ -1,0 +1,29 @@
+version: "2"
+services:
+  namenode:
+    image: "hdfs:2.7.3"
+    container_name: "namenode"
+    network_mode: "bridge"
+    ports:
+      - "9000:9000"
+      - "50070:50070"
+    volumes:
+      - "namenode_data:/data/hdfs/dfs/name"
+    command:
+      - ""
+  datanode-1:
+    image: "hdfs:2.7.3"
+    container_name: "datanode1"
+    network_mode: "bridge"
+    links:
+      - "namenode"
+    volumes:
+      - "datanode_data_1:/data/hdfs/dfs/data"
+  datanode-2:
+    image: "hdfs:2.7.3"
+    container_name: "datanode2"
+    network_mode: "bridge"
+    links:
+      - "namenode"
+    volumes:
+      - "datanode_data_2:/data/hdfs/dfs/data"
