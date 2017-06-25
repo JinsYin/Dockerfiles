@@ -1,7 +1,7 @@
 FROM openjdk:8-jdk-alpine
 MAINTAINER Jins Yin <jinsyin@gmail.com>
 
-RUN apk add --no-cache bash python
+RUN apk add --no-cache bash python py-pip
 
 ENV JAVA_VERSION=1.8
 ENV PYTHON_VERSION=2.7
