@@ -1,9 +1,27 @@
-#!/bin/sh
-# Author: Jins Yin <yrqiang@163.com>
+#!/bin/bash
+# Author: Jins Yin <jinsyin@gmail.com>
 
-if [ \( "$2" == "namenode" \) -a \( ! -f ${DFS_NAMENODE_NAME_DIR}/current/VERSION \) ] || [ "${NAMENODE_FORMAT_FORCED}" == "true" ]; then
-	sed -i "s|HADOOP_TMP_DIR|${HADOOP_TMP_DIR}|g" ${HADOOP_CONF_DIR}/core-site.xml
-	${HADOOP_PREFIX}/bin/hdfs namenode -format -D hadoop.tmp.dir=${HADOOP_TMP_DIR} # -D: not working
+: ${NAMENODE_FORMAT_FORCED:=false}
+: ${DFS_NAMENODE_NAME_DIR:="/tmp/hadoop-root/dfs/name"}
+
+for x in $@
+do
+	case $x in
+		"-Dhadoop.tmp.dir="*) 
+			IFS='=' read -ra PROP <<< "$x";
+			DFS_NAMENODE_NAME_DIR=${PROP[1]}/dfs/name;
+		;;
+		"-Ddfs.namenode.name.dir="*)
+			IFS='=' read -ra PROP <<< "$x";
+			DFS_NAMENODE_NAME_DIR=${PROP[1]};
+			break;
+		;;
+	esac
+done
+
+# Format namenode
+if [ "$2" == "namenode" ] && [ \( ! -f ${DFS_NAMENODE_NAME_DIR}/current/VERSION \) -o \(  "${NAMENODE_FORMAT_FORCED}" == "true" \) ]; then
+	echo -e "Y\n\n\n" | ${HADOOP_HOME}/bin/hdfs namenode -Ddfs.namenode.name.dir=${DFS_NAMENODE_NAME_DIR} -format;
 fi
 
 exec "$@"

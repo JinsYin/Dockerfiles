@@ -1,9 +1,17 @@
-# HDFS docker image
+# HDFS HA docker image
+
+HDFS HA docker image without any configuration files.
 
 ## Build
 
 ```bash
 $ docker build -f Dockerfile -t hdfs:2.7.3 .
+```
+
+OR 
+
+```bash
+$ docker build -f Dockerfile -t hdfs:2.7.3 --build-arg HADOOP_TARBALL=hadoop-2.7.3.tar.gz .
 ```
 
 ## Compose
@@ -12,47 +20,112 @@ $ docker build -f Dockerfile -t hdfs:2.7.3 .
 $ docker-compose -f docker-compose.yml up -d
 ```
 
-## HDFS cluster
+## HDFS cluster with SPOF
 
-å¯åŠ¨ NameNode,ä½ å¯ä»¥ä½¿ç”¨ `-e NAMENODE_FORMAT_FORCED=true` æ¥å¼ºåˆ¶æ ¼å¼åŒ– NameNode.å¦‚æœæƒ³æŒ‚è½½ NameNode çš„æ•°æ®åˆ° docker å·æˆ–ä¸»æœº,é™¤äº†ä½¿ç”¨ `-v` æ¥æŒ‚è½½å¤–,è¿˜éœ€è¦æŒ‡å®š `-D dfs.namenode.name.dir`,å¦åˆ™ `/data/hdfs/dfs/name` ä¸ä¼šè‡ªåŠ¨åˆ›å»º.
+Ê×´ÎÆô¶¯ NameNode Ê±£¬Èç¹û `dfs.namenode.name.dir` ¶ÔÓ¦µÄ¹ÒÔØÄ¿Â¼Îª¿Õ»á×Ô¶¯¸ñÊ½»¯ NameNode¡£Èç¹ûÅäÖÃÃ»ÓĞ·¢ÏÖ±ä»¯£¬Ö®ºó²»»áÔÙ¸ñÊ½»¯ NameNode¡£Èç¹ûÏëÒªÇ¿ÖÆ¸ñÊ½»¯£¬¿ÉÒÔÉèÖÃ `-e NAMENODE_FORMAT_FORCED=true`¡£
+
+- NameNode
+
 ```bash
-$ docker run -it --name namenode -p 9000:9000 -p 50070:50070 \
--e HADOOP_TMP_DIR=/data/hdfs hdfs:2.7.3 \
--v namenode_data:/data/hdfs/dfs/name hdfs namenode \
--D dfs.namenode.name.dir=/data/hdfs/dfs/name \
--D fs.defaultFS=hdfs://0.0.0.0:9000 \
--D dfs.replication=3 \
--D dfs.namenode.datanode.registration.ip-hostname-check=false \
--D dfs.permissions.enabled=false \
+$ docker run -itd --name namenode -p 9000:9000 -p 50070:50070 \
+-v hdfs-namenode:/hdfs/dfs/name hdfs:2.7.3 hdfs namenode \
+-Dfs.defaultFS=hdfs://0.0.0.0:9000 \
+-Ddfs.namenode.name.dir=/hdfs/dfs/name \
+-Ddfs.replication=3 \
+-Ddfs.namenode.datanode.registration.ip-hostname-check=false \
+-Ddfs.permissions.enabled=false
 ```
 
-å¯åŠ¨ DataNode
+- DataNode
+
 ```bash
-$ docker run -it --name datanode -d -p 50010:50010 -p 50020:50020 \
--e HADOOP_TMP_DIR=/data/hdfs -v datanode_data:/data/hdfs/dfs/data hdfs:2.7.3 hdfs datanode \
--fs hdfs://xxx.xxx.xxx.xxx:9000 \
--D dfs.datanode.data.dir=/data/hdfs/dfs/data \
--D dfs.permissions.enabled=false
+$ docker run -itd --name datanode -p 50010:50010 -p 50020:50020 \
+-v hdfs-datanode:/hdfs/dfs/data --link namenode:hdfs hdfs:2.7.3 hdfs datanode \
+-fs hdfs://namenode:9000 \
+-Ddfs.datanode.data.dir=/hdfs/dfs/data \
+-Ddfs.permissions.enabled=false
 ```
 
-## High Availability
+OR
 
-å¯åŠ¨ NameNode
+```bash
+$ docker run -itd --name datanode -p 50010:50010 -p 50020:50020 \
+-v hdfs-datanode:/hdfs/dfs/data hdfs:2.7.3 hdfs datanode \
+-fs hdfs://[NAMENODE-IP]:9000 \
+-Ddfs.datanode.data.dir=/hdfs/dfs/data \
+-Ddfs.permissions.enabled=false
+```
+
+## HDFS cluster with high availability
+
+Æô¶¯²½Öè(ÒÔÏÂ²Ù×÷ºöÂÔÅäÖÃ)£º
+
+1). Æô¶¯ËùÓĞ JournalNode
+```bash
+$ hdfs journalnode
+```
+
+2). Æô¶¯ nn1£¬ nn2
+
+2.1)nn1
+```bash
+$ hdfs namenode -format # ĞÂ¼¯ÈºĞèÒª¸ñÊ½»¯
+```
+
+³õÊ¼»¯ JournalNode
+```bash
+# ÔÚÈÎÒâÒ»Ì¨ NameNode ½Úµã³õÊ¼»¯ JournalNode£¬»áÔÚËùÓĞ JNs ³õÊ¼»¯ `dfs.namenode.shared.edits.dir` ÏàÓ¦ĞÅÏ¢
+$ hdfs namenode -initializeSharedEdits [-force | -nonInteractive] 
+```
+
+ÈÎÒâÒ»¸ö NameNode ³õÊ¼»¯ zk ÅäÖÃ£¬ ÕâÀïÑ¡ÔñÔÚ nn1 ÉÏ
+```bash
+$ hdfs zkfc -format
+```
+
+```bash
+$ hdfs namenode # Æô¶¯ nn1
+```
+
+2.2) nn2
+```bash
+# ×¢Òâ£ºÈç¹ûÊÇ nn2 µÄ NameNode ÒÑ±» format »òÕßÊÇ½«·Ç HA HDFS µÄ¼¯Èº×ª»¯³ÉÎª HA HDFS Ôò²»ĞèÒªÖ´ĞĞÕâ¸ö²½Öè¡£
+$ hdfs namenode -bootstrapStandby -force # ÈÃ nn2 Í¬²½ nn1 ÉÏ×îĞÂµÄ FSimage
+```
+
+```bash
+$ hdfs namenode # Æô¶¯ nn2
+```
+
+nn1£¬ nn2 Æô¶¯Ö®ºóÒÀÈ»Á½¸ö¶¼ÊÇ Standby ×´Ì¬£¬ Í¬Ê±ÈÕÖ¾ÌáÊ¾³ö´í `Operation category JOURNAL is not supported in state standby`.¶øÇÒ£¬ÒòÎªÃ»ÓĞ Active NameNode£¬ DataNode Ò²ÎŞ·¨Æô¶¯.
+
+3). Æô¶¯ËùÓĞµÄ DataNode
+```bash
+$ hdfs datanode
+```
+
+4). ÊÖ¶¯ÇĞ»» Active NameNode
+```bash
+$ hdfs haadmin -transitionToActive nn1 # ÉèÖÃ nn1 µÄ×´Ì¬Îª Active
+```
+
+
 ```bash
 $ docker run -it --name nn1 -d -p 9000:9000 -p 50070:50070 \
+--ip=172.17.0.101 \
+--add-host=jn1:192.168.100 \
+--add-host=jn1:192.168.199 \
+--add-host=jn1:192.168.207 \
+--add-host=nn1:172.17.0.101 \
+--add-host=nn2:172.17.0.102 \
 --add-host=zk1:192.168.111.203 \
 --add-host=zk2:192.168.111.204 \
 --add-host=zk3:192.168.111.205 \
---link nn1:nn1 \
---link nn2:nn2 \
---link jn1:jn1 \
---link jn2:jn2 \
---link jn3:jn3 \
 -e HADOOP_TMP_DIR=/data/hdfs hdfs:2.7.3 hdfs namenode \
 -D fs.defaultFS=hdfs://ha_hdfs \
--D ha.zookeeper.quorum=zk1:2181,zk2:2181,zk3:2181 \
+-D ha.zookeeper.quorum=zk1:2181£¬zk2:2181£¬zk3:2181 \
 -D dfs.nameservices=ha_hdfs \
--D dfs.ha.namenodes.ha_hdfs=nn1,nn2 \
+-D dfs.ha.namenodes.ha_hdfs=nn1£¬nn2 \
 -D dfs.namenode.rpc-address.ha_hdfs.nn1=nn1:8020 \
 -D dfs.namenode.rpc-address.ha_hdfs.nn2=nn2:8020 \
 -D dfs.namenode.http-address.ha_hdfs.nn1=nn1:50070 \
@@ -62,17 +135,73 @@ $ docker run -it --name nn1 -d -p 9000:9000 -p 50070:50070 \
 -D dfs.journalnode.edits.dir=/data/hdfs/dfs/journal
 ```
 
-å¯åŠ¨ StandbyNameNode
+Æô¶¯ NameNode£¬±ØĞëÎª nn1£¬nn2 Ö¸¶¨¹Ì¶¨µÄ IP£¬»òÕßÌí¼Ó `--dns` ²¢Ö¸¶¨ÓòÃû.
 ```bash
-$ 
+$ docker run -it --name nn1 -d -p 9000:9000 -p 50070:50070 \
+--ip=172.17.0.101 \
+--add-host=jn1:192.168.100 \
+--add-host=jn1:192.168.199 \
+--add-host=jn1:192.168.207 \
+--add-host=nn1:172.17.0.101 \
+--add-host=nn2:172.17.0.102 \
+--add-host=zk1:192.168.111.203 \
+--add-host=zk2:192.168.111.204 \
+--add-host=zk3:192.168.111.205 \
+-e HADOOP_TMP_DIR=/data/hdfs hdfs:2.7.3 hdfs namenode \
+-D fs.defaultFS=hdfs://ha_hdfs \
+-D ha.zookeeper.quorum=zk1:2181£¬zk2:2181£¬zk3:2181 \
+-D dfs.nameservices=ha_hdfs \
+-D dfs.ha.namenodes.ha_hdfs=nn1£¬nn2 \
+-D dfs.namenode.rpc-address.ha_hdfs.nn1=nn1:8020 \
+-D dfs.namenode.rpc-address.ha_hdfs.nn2=nn2:8020 \
+-D dfs.namenode.http-address.ha_hdfs.nn1=nn1:50070 \
+-D dfs.namenode.http-address.ha_hdfs.nn2=nn2:50070 \
+-D dfs.namenode.shared.edits.dir=qjournal://jn1:8485;jn2:8485;jn3:8485/ha_hdfs -D dfs.client.failover.proxy.provider.ha_hdfs=org.apache.hadoop.hdfs.server.namenode.ha.ConfiguredFailoverProxyProvider \
+-D dfs.ha.automatic-failover.enabled=true
 ```
 
-å¯åŠ¨ JournalNode
+Æô¶¯ StandbyNameNode
 ```bash
-$ 
+$ docker run -it --name nn2 -d -p 9000:9000 -p 50070:50070 \
+--ip=172.17.0.102 \
+--add-host=jn1:192.168.100 \
+--add-host=jn1:192.168.199 \
+--add-host=jn1:192.168.207 \
+--add-host=nn1:172.17.0.101 \
+--add-host=nn2:172.17.0.102 \
+--add-host=zk1:192.168.111.203 \
+--add-host=zk2:192.168.111.204 \
+--add-host=zk3:192.168.111.205 \
+-e HADOOP_TMP_DIR=/data/hdfs hdfs:2.7.3 hdfs namenode -bootstrapStandby \
+-D fs.defaultFS=hdfs://ha_hdfs \
+-D ha.zookeeper.quorum=zk1:2181£¬zk2:2181£¬zk3:2181 \
+-D dfs.nameservices=ha_hdfs \
+-D dfs.ha.namenodes.ha_hdfs=nn1£¬nn2 \
+-D dfs.namenode.rpc-address.ha_hdfs.nn1=nn1:8020 \
+-D dfs.namenode.rpc-address.ha_hdfs.nn2=nn2:8020 \
+-D dfs.namenode.http-address.ha_hdfs.nn1=nn1:50070 \
+-D dfs.namenode.http-address.ha_hdfs.nn2=nn2:50070 \
+-D dfs.namenode.shared.edits.dir=qjournal://jn1:8485;jn2:8485;jn3:8485/ha_hdfs -D dfs.client.failover.proxy.provider.ha_hdfs=org.apache.hadoop.hdfs.server.namenode.ha.ConfiguredFailoverProxyProvider \
+-D dfs.ha.automatic-failover.enabled=true
 ```
 
-å¯åŠ¨ DataNode
+Æô¶¯ JournalNode
 ```bash
-$ 
+$ docker run -it --name jn1 -d -p 8485:8485 -p 8480:8480 \
+hdfs:2.7.3 hdfs journalnode -D dfs.journalnode.edits.dir=/data/hdfs/dfs/journal
 ```
+
+Æô¶¯ DataNode
+```bash
+$ docker run -it --name datanode -d -p 50010:50010 -p 50020:50020 \
+-e HADOOP_TMP_DIR=/data/hdfs \
+-v datanode_data:/data/hdfs/dfs/data hdfs:2.7.3 hdfs datanode \
+-D fs.defaultFS=hdfs://ha_hdfs
+-D dfs.datanode.data.dir=/data/hdfs/dfs/data \
+-D dfs.permissions.enabled=false
+```
+
+
+## ×¢Òâ
+
+docker-entrypoint.sh Ê¹ÓÃµÄÊÇ `#!/bin/bash`£¬ Èç¹ûÊ¹ÓÃ `#!/bin/sh` »á³ö´í¡£
