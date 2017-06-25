@@ -51,3 +51,6 @@ $ docker-compose scale worker=2
 
 > https://github.com/gliderlabs/docker-alpine/issues/173
 > https://busybox.net/downloads/BusyBox.html#ps
+> https://issues.apache.org/jira/browse/SPARK-13587
+> https://github.com/apache/spark/pull/13599
+> https://github.com/apache/spark/pull/14180
