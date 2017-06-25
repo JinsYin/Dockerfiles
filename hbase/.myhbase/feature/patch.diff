@@ -1,0 +1,70 @@
+diff --git a/hbase-common/src/main/java/org/apache/hadoop/hbase/HConstants.java b/hbase-common/src/main/java/org/apache/hadoop/hbase/HConstants.java
+index c9ca06d..513e6bb 100644
+--- a/hbase-common/src/main/java/org/apache/hadoop/hbase/HConstants.java
++++ b/hbase-common/src/main/java/org/apache/hadoop/hbase/HConstants.java
+@@ -269,6 +269,9 @@ public final class HConstants {
+   /** Parameter name for HBase instance root directory */
+   public static final String HBASE_DIR = "hbase.rootdir";
+ 
++  /** Parameter name for Using ip or hostname in zookeeper*/
++  public static final String HBASE_SERVER_IP_ENABLED = "hbase.server.ip.enabled";
++
+   /** Parameter name for HBase client IPC pool type */
+   public static final String HBASE_CLIENT_IPC_POOL_TYPE = "hbase.client.ipc.pool.type";
+ 
+diff --git a/hbase-server/src/main/java/org/apache/hadoop/hbase/master/ServerManager.java b/hbase-server/src/main/java/org/apache/hadoop/hbase/master/ServerManager.java
+index af6339c..1b53a86 100644
+--- a/hbase-server/src/main/java/org/apache/hadoop/hbase/master/ServerManager.java
++++ b/hbase-server/src/main/java/org/apache/hadoop/hbase/master/ServerManager.java
+@@ -120,6 +120,8 @@ public class ServerManager {
+   // Set if we are to shutdown the cluster.
+   private volatile boolean clusterShutdown = false;
+ 
++  private boolean hbaseServerIPEnabled = false;
++
+   /**
+    * The last flushed sequence id for a region.
+    */
+@@ -220,6 +222,7 @@ public class ServerManager {
+     maxSkew = c.getLong("hbase.master.maxclockskew", 30000);
+     warningSkew = c.getLong("hbase.master.warningclockskew", 10000);
+     this.connection = connect ? (ClusterConnection)ConnectionFactory.createConnection(c) : null;
++    this.hbaseServerIPEnabled = c.getBoolean(HConstants.HBASE_SERVER_IP_ENABLED, false);
+     int pingMaxAttempts = Math.max(1, master.getConfiguration().getInt(
+       "hbase.master.maximum.ping.server.attempts", 10));
+     int pingSleepInterval = Math.max(1, master.getConfiguration().getInt(
+@@ -262,8 +265,8 @@ public class ServerManager {
+ 
+     final String hostname = request.hasUseThisHostnameInstead() ?
+         request.getUseThisHostnameInstead() :ia.getHostName();
+-    ServerName sn = ServerName.valueOf(hostname, request.getPort(),
+-      request.getServerStartCode());
++    ServerName sn = ServerName.valueOf(hbaseServerIPEnabled ? ia.getHostAddress() : hostname,
++            request.getPort(), request.getServerStartCode());
+     checkClockSkew(sn, request.getServerCurrentTime());
+     checkIsDead(sn, "STARTUP");
+     if (!checkAndRecordNewServer(sn, ServerLoad.EMPTY_SERVERLOAD)) {
+diff --git a/hbase-server/src/main/java/org/apache/hadoop/hbase/regionserver/HRegionServer.java b/hbase-server/src/main/java/org/apache/hadoop/hbase/regionserver/HRegionServer.java
+index 68c5ddf..0b565c9 100644
+--- a/hbase-server/src/main/java/org/apache/hadoop/hbase/regionserver/HRegionServer.java
++++ b/hbase-server/src/main/java/org/apache/hadoop/hbase/regionserver/HRegionServer.java
+@@ -532,6 +532,8 @@ public class HRegionServer extends HasThread implements
+     this.abortRequested = false;
+     this.stopped = false;
+ 
++    boolean hbaseServerIPEnabled = conf.getBoolean(HConstants.HBASE_SERVER_IP_ENABLED, false);
++
+     rpcServices = createRpcServices();
+     this.startcode = System.currentTimeMillis();
+     if (this instanceof HMaster) {
+@@ -541,7 +543,9 @@ public class HRegionServer extends HasThread implements
+     }
+     String hostName = shouldUseThisHostnameInstead() ? useThisHostnameInstead :
+       rpcServices.isa.getHostName();
+-    serverName = ServerName.valueOf(hostName, rpcServices.isa.getPort(), startcode);
++    String hostAddress = rpcServices.isa.getAddress().getHostAddress();
++    serverName = ServerName.valueOf(hbaseServerIPEnabled ? hostAddress : hostName,
++            rpcServices.isa.getPort(), startcode);
+ 
+     rpcControllerFactory = RpcControllerFactory.instantiate(this.conf);
+     rpcRetryingCallerFactory = RpcRetryingCallerFactory.instantiate(this.conf);
