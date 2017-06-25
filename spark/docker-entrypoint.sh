@@ -1,5 +1,5 @@
-#!/bin/bash
-# author: Jins Yin <yrqiang@163.com>
+#!/bin/sh
+# Author: Jins Yin <yrqiang@163.com>
 
 case "$1" in
 	"master"|"start-master")
