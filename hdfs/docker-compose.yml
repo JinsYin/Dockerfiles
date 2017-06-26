@@ -8,7 +8,7 @@ services:
       - "9000:9000"
       - "50070:50070"
     volumes:
-      - "hdfs-namenode:/data/hdfs/dfs/name"
+      - "$pwd/name:/hdfs/dfs/name"
     command:
       - ""
   datanode-1:
@@ -16,14 +16,20 @@ services:
     container_name: "datanode1"
     network_mode: "bridge"
     links:
-      - "namenode"
+      - "namenode:hdfs"
     volumes:
-      - "hdfs-datanode-1:/data/hdfs/dfs/data"
+      - "$pwd/data1:/hdfs/dfs/data"
+    expose:
+      - "50010"
+      - "50020"
   datanode-2:
     image: "hdfs:2.7.3"
     container_name: "datanode2"
     network_mode: "bridge"
     links:
-      - "namenode"
+      - "namenode:hdfs"
     volumes:
-      - "datanode-data-2:/data/hdfs/dfs/data"
+      - "$pwd/data2:/hdfs/dfs/data"
+    expose:
+      - "50010"
+      - "50020"

@@ -7,11 +7,12 @@
 for x in $@
 do
 	case $x in
-		"-Dhadoop.tmp.dir="*) 
+		"-Dhadoop.tmp.dir="*|"hadoop.tmp.dir="*) 
 			IFS='=' read -ra PROP <<< "$x";
 			DFS_NAMENODE_NAME_DIR=${PROP[1]}/dfs/name;
+			continue;
 		;;
-		"-Ddfs.namenode.name.dir="*)
+		"-Ddfs.namenode.name.dir="*|"dfs.namenode.name.dir="*)
 			IFS='=' read -ra PROP <<< "$x";
 			DFS_NAMENODE_NAME_DIR=${PROP[1]};
 			break;

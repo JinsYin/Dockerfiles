@@ -24,6 +24,8 @@ $ docker-compose -f docker-compose.yml up -d
 
 首次启动 NameNode 时，如果 `dfs.namenode.name.dir` 对应的挂载目录为空会自动格式化 NameNode。如果配置没有发现变化，之后不会再格式化 NameNode。如果想要强制格式化，可以设置 `-e NAMENODE_FORMAT_FORCED=true`。
 
+`dfs.namenode.name.dir` 默认路径 `/tmp/hadoop-root/dfs/name`。
+
 - NameNode
 
 ```bash
@@ -54,6 +56,12 @@ $ docker run -itd --name datanode -p 50010:50010 -p 50020:50020 \
 -fs hdfs://[NAMENODE-IP]:9000 \
 -Ddfs.datanode.data.dir=/hdfs/dfs/data \
 -Ddfs.permissions.enabled=false
+```
+
+- Compose
+
+```bash
+$ docker-compose -f docker-compose.yml up
 ```
 
 ## HDFS cluster with high availability
