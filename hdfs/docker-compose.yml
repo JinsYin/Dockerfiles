@@ -8,28 +8,53 @@ services:
       - "9000:9000"
       - "50070:50070"
     volumes:
-      - "$pwd/name:/hdfs/dfs/name"
-    command:
-      - ""
-  datanode-1:
+      - "/tmp/dfs/name:/hdfs/dfs/name"
+    command: [
+      "hdfs",
+      "namenode",
+      "-Dfs.defaultFS=hdfs://0.0.0.0:9000",
+      "-Ddfs.namenode.name.dir=/hdfs/dfs/name",
+      "-Ddfs.replication=3",
+      "-Ddfs.namenode.datanode.registration.ip-hostname-check=false",
+      "-Ddfs.permissions.enabled=false"
+      ]
+  datanode1:
     image: "hdfs:2.7.3"
     container_name: "datanode1"
     network_mode: "bridge"
     links:
-      - "namenode:hdfs"
+      - "namenode:namenode"
     volumes:
-      - "$pwd/data1:/hdfs/dfs/data"
+      - "/tmp/dfs/data1:/hdfs/dfs/data"
     expose:
       - "50010"
       - "50020"
-  datanode-2:
+    depends_on:
+      - namenode
+    command: [
+      "hdfs",
+      "datanode",
+      "-fs", "hdfs://namenode:9000",
+      "-Ddfs.datanode.data.dir=/hdfs/dfs/data",
+      "-Ddfs.permissions.enabled=false"
+      ]
+  datanode2:
     image: "hdfs:2.7.3"
     container_name: "datanode2"
     network_mode: "bridge"
     links:
-      - "namenode:hdfs"
+      - "namenode:namenode"
     volumes:
-      - "$pwd/data2:/hdfs/dfs/data"
+      - "/tmp/dfs/data2:/hdfs/dfs/data"
     expose:
       - "50010"
       - "50020"
+    depends_on:
+      - namenode
+    command: [
+      "hdfs",
+      "datanode",
+      "-fs", "hdfs://namenode:9000",
+      "-Ddfs.datanode.data.dir=/hdfs/dfs/data",
+      "-Ddfs.permissions.enabled=false"
+      ]
