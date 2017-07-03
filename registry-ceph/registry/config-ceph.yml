@@ -1,0 +1,26 @@
+version: 0.1
+log:
+  fields:
+    service: registry
+storage:
+  swift: 
+    authurl: $STORAGE_SWIFT_AUTHURL
+    username: $STORAGE_SWIFT_USERNAME
+    password: $STORAGE_SWIFT_PASSWORD
+    container: registry
+  cache:
+    layerinfo: inmemory
+  maintenance:
+    uploadpurging:
+      enabled: false
+  delete:
+    enable: true
+http:
+  addr: :$HTTP_PORT
+  headers:
+    X-Content-Type-Options: [nosniff]
+health:
+  storagedriver:
+    enabled: true
+    interval: 10s
+    threshold: 3
