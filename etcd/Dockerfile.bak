@@ -1,0 +1,17 @@
+FROM alpine:3.5
+MAINTAINER Jins Yin <jinsyin@gmail.com>
+
+RUN VERSION="v2.3.7"
+
+RUN apk add --no-cache bash tar
+
+ADD http://github.com/coreos/etcd/releases/download/${VERSION}/etcd-${VERSION}-linux-amd64.tar.gz /etcdv2.tar.gz
+RUN mkdir /etcdv2 && tar -zxf /etcdv2.tar.gz -C /etcdv2 --strip-components=1
+
+RUN mv /etcdv2/etcd* /usr/bin/ && chmod +x /usr/bin/etcd*
+
+# Remove
+RUN apk del --no-cache tar
+RUN rm -rf /etcdv2*
+
+CMD ["bash"]
