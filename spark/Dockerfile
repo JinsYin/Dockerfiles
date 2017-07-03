@@ -1,7 +1,9 @@
-FROM openjdk:8-jdk-alpine
+FROM alpine:3.5
 MAINTAINER Jins Yin <jinsyin@gmail.com>
 
-RUN apk add --no-cache bash python py-pip
+RUN apk add --no-cache build-base linux-headers pcre-dev python3 python3-dev openjdk8 bash
+RUN ln -s /usr/bin/python3 /usr/bin/python
+RUN ln -s /usr/bin/pip3 /usr/bin/pip
 
 ENV JAVA_VERSION=1.8
 ENV PYTHON_VERSION=2.7
@@ -31,7 +33,7 @@ RUN chmod a+x /usr/bin/docker-entrypoint.sh
 # 6066: Master REST Port
 # 7077:	Master Listen Port
 # 8080:	Master Web UI Port
-# 8081:	Worker Web UI port
+# 8081:	Worker Web UI Port
 EXPOSE 6066 7077 8080 8081
 
 ENTRYPOINT ["docker-entrypoint.sh"]
