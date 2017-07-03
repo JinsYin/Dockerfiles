@@ -213,3 +213,7 @@ $ docker run -it --name datanode -d -p 50010:50010 -p 50020:50020 \
 ## 注意
 
 docker-entrypoint.sh 使用的是 `#!/bin/bash`， 如果使用 `#!/bin/sh` 会出错。
+
+## 参考
+
+> https://hub.docker.com/r/elek/hadoop-hdfs-namenode/
