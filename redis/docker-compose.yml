@@ -1,0 +1,21 @@
+version: "2"
+services:
+  master:
+    image: "redis:3.2.6-alpine"
+  slave:
+    image: "redis:3.2.6-alpine"
+    command: "redis-server --slaveof redis-master 6379"
+    links:
+      - "master:redis-master"
+  sentinel:
+    image: "redis-sentinel:3.2.6-alpine"
+    environment:
+      - SENTINEL_DOWN_AFTER=10000
+      - SENTINEL_FAILOVER=10000
+      - SENTINEL_NAME=myredis
+      - SENTINEL_PORT=26379
+      - REDIS_MASTER=redis-master
+      - REDIS_MASTER_PORT=6379
+      - SENTINEL_QUORUM=1
+    links:
+      - master:redis-master
