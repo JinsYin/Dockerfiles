@@ -1,12 +1,6 @@
-FROM alpine:3.5
+FROM spark-base:1.8-3.5-numpy-pandas-scipy
 MAINTAINER Jins Yin <jinsyin@gmail.com>
 
-RUN apk add --no-cache build-base linux-headers pcre-dev python3 python3-dev openjdk8 bash
-RUN ln -s /usr/bin/python3 /usr/bin/python
-RUN ln -s /usr/bin/pip3 /usr/bin/pip
-
-ENV JAVA_VERSION=1.8
-ENV PYTHON_VERSION=2.7
 ARG HADOOP_VERSION=2.7
 ARG SPARK_VERSION=2.0.2
 ARG SPARK_TARBALL=http://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz
@@ -16,7 +10,7 @@ ADD ${SPARK_TARBALL} ./
 RUN mv spark-* spark
 
 ENV SPARK_HOME=/usr/local/spark
-ENV JAVA_HOME=/usr/lib/jvm/java-${JAVA_VERSION}-openjdk
+ENV JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
 ENV JRE_HOME=${JAVA_HOME}/jre
 ENV CLASS_PATH=${JAVA_HOME}/lib
 ENV PATH=${PATH}:${SPARK_HOME}/bin:${SPARK_HOME}/sbin:${JAVA_HOME}/bin:${JRE_HOME}/bin

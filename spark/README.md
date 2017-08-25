@@ -12,19 +12,25 @@ $ docker build -t spark:2.0.2 -f Dockerfile .
 OR
 
 ```bash
+$ docker build -t spark:2.1.0 -f Dockerfile --build-arg SPARK_VERSION=2.1.0 .
+```
+
+OR
+
+```bash
 $ docker build -t spark:2.0.2 -f Dockerfile --build-arg SPARK_TARBALL=spark-2.0.2-bin-hadoop2.7.tgz .
 ```
 
 
 ## Deployment
 
-- master
+* master
 
 ```bash
 $ docker run -itd --name spark-master -p 6066:6066 -p 7077:7077 -p 8080:8080 spark:2.0.2 master
 ```
 
-- worker
+* worker
 
 ```bash
 $ docker run -itd --name spark-worker --link spark-master:master spark:2.0.2 worker spark://master:7077
