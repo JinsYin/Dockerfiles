@@ -5,13 +5,13 @@ HDFS HA docker image without any configuration files.
 ## Build
 
 ```bash
-$ docker build -f Dockerfile -t hdfs:2.7.3 .
+$ docker build -f Dockerfile -t dockerce/hdfs:2.7.3 .
 ```
 
 OR 
 
 ```bash
-$ docker build -f Dockerfile -t hdfs:2.7.3 --build-arg HADOOP_TARBALL=hadoop-2.7.3.tar.gz .
+$ docker build -f Dockerfile -t dockerce/hdfs:2.7.3 --build-arg HADOOP_TARBALL=hadoop-2.7.3.tar.gz .
 ```
 
 ## Compose
@@ -30,7 +30,7 @@ $ docker-compose -f docker-compose.yml up -d
 
 ```bash
 $ docker run -itd --name namenode -p 9000:9000 -p 50070:50070 \
--v hdfs-namenode:/hdfs/dfs/name hdfs:2.7.3 hdfs namenode \
+-v hdfs-namenode:/hdfs/dfs/name dockerce/hdfs:2.7.3 hdfs namenode \
 -Dfs.defaultFS=hdfs://0.0.0.0:9000 \
 -Ddfs.namenode.name.dir=/hdfs/dfs/name \
 -Ddfs.replication=3 \
@@ -41,8 +41,9 @@ $ docker run -itd --name namenode -p 9000:9000 -p 50070:50070 \
 - DataNode
 
 ```bash
+$ # local
 $ docker run -itd --name datanode -p 50010:50010 -p 50020:50020 \
--v hdfs-datanode:/hdfs/dfs/data --link namenode:hdfs hdfs:2.7.3 hdfs datanode \
+-v hdfs-datanode:/hdfs/dfs/data --link namenode:hdfs dockerce/hdfs:2.7.3 hdfs datanode \
 -fs hdfs://namenode:9000 \
 -Ddfs.datanode.data.dir=/hdfs/dfs/data \
 -Ddfs.permissions.enabled=false
@@ -51,8 +52,9 @@ $ docker run -itd --name datanode -p 50010:50010 -p 50020:50020 \
 OR
 
 ```bash
+$ # remote
 $ docker run -itd --name datanode -p 50010:50010 -p 50020:50020 \
--v hdfs-datanode:/hdfs/dfs/data hdfs:2.7.3 hdfs datanode \
+-v hdfs-datanode:/hdfs/dfs/data dockerce/hdfs:2.7.3 hdfs datanode \
 -fs hdfs://[NAMENODE-IP]:9000 \
 -Ddfs.datanode.data.dir=/hdfs/dfs/data \
 -Ddfs.permissions.enabled=false
@@ -129,7 +131,7 @@ $ docker run -it --name nn1 -d -p 9000:9000 -p 50070:50070 \
 --add-host=zk1:192.168.111.203 \
 --add-host=zk2:192.168.111.204 \
 --add-host=zk3:192.168.111.205 \
--e HADOOP_TMP_DIR=/data/hdfs hdfs:2.7.3 hdfs namenode \
+-e HADOOP_TMP_DIR=/data/hdfs dockerce/hdfs:2.7.3 hdfs namenode \
 -D fs.defaultFS=hdfs://ha_hdfs \
 -D ha.zookeeper.quorum=zk1:2181£¬zk2:2181£¬zk3:2181 \
 -D dfs.nameservices=ha_hdfs \
@@ -155,7 +157,7 @@ $ docker run -it --name nn1 -d -p 9000:9000 -p 50070:50070 \
 --add-host=zk1:192.168.111.203 \
 --add-host=zk2:192.168.111.204 \
 --add-host=zk3:192.168.111.205 \
--e HADOOP_TMP_DIR=/data/hdfs hdfs:2.7.3 hdfs namenode \
+-e HADOOP_TMP_DIR=/data/hdfs dockerce/hdfs:2.7.3 hdfs namenode \
 -D fs.defaultFS=hdfs://ha_hdfs \
 -D ha.zookeeper.quorum=zk1:2181£¬zk2:2181£¬zk3:2181 \
 -D dfs.nameservices=ha_hdfs \
@@ -180,7 +182,7 @@ $ docker run -it --name nn2 -d -p 9000:9000 -p 50070:50070 \
 --add-host=zk1:192.168.111.203 \
 --add-host=zk2:192.168.111.204 \
 --add-host=zk3:192.168.111.205 \
--e HADOOP_TMP_DIR=/data/hdfs hdfs:2.7.3 hdfs namenode -bootstrapStandby \
+-e HADOOP_TMP_DIR=/data/hdfs dockerce/hdfs:2.7.3 hdfs namenode -bootstrapStandby \
 -D fs.defaultFS=hdfs://ha_hdfs \
 -D ha.zookeeper.quorum=zk1:2181£¬zk2:2181£¬zk3:2181 \
 -D dfs.nameservices=ha_hdfs \
@@ -196,14 +198,14 @@ $ docker run -it --name nn2 -d -p 9000:9000 -p 50070:50070 \
 Æô¶¯ JournalNode
 ```bash
 $ docker run -it --name jn1 -d -p 8485:8485 -p 8480:8480 \
-hdfs:2.7.3 hdfs journalnode -D dfs.journalnode.edits.dir=/data/hdfs/dfs/journal
+dockerce/hdfs:2.7.3 hdfs journalnode -D dfs.journalnode.edits.dir=/data/hdfs/dfs/journal
 ```
 
 Æô¶¯ DataNode
 ```bash
 $ docker run -it --name datanode -d -p 50010:50010 -p 50020:50020 \
 -e HADOOP_TMP_DIR=/data/hdfs \
--v datanode_data:/data/hdfs/dfs/data hdfs:2.7.3 hdfs datanode \
+-v datanode_data:/data/hdfs/dfs/data dockerce/hdfs:2.7.3 hdfs datanode \
 -D fs.defaultFS=hdfs://ha_hdfs
 -D dfs.datanode.data.dir=/data/hdfs/dfs/data \
 -D dfs.permissions.enabled=false
